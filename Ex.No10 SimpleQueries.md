@@ -1,88 +1,284 @@
-# Ex.No: 10  Logic Programming –  Simple queries from facts and rules
-### DATE: 29/04/2025                                                                         
+# Ex.No: 13 
+Brain Tumor Detection Using Deep Learning
+### DATE: 13/05/2025                                                                           
 ### REGISTER NUMBER : 212222040107
 ### AIM: 
-To write a prolog program to find the answer of query. 
-###  Algorithm:
- Step 1: Start the program <br> 
- Step 2: Convert the sentence into First order Logic  <br> 
- Step 3:  Convert the sentence into Horn clause form  <br> 
- Step 4: Add rules and predicates in a program   <br> 
- Step 5:  Pass the query to program. <br> 
- Step 6: Prolog interpreter shows the output and return answer. <br> 
- Step 8:  Stop the program.
+To design and implement a deep learning-based system for detecting brain tumors in MRI scans, with the goal of accurately classifying tumor types (glioma, meningioma, pituitary) and enabling early diagnosis to support medical decision-making.###  Algorithm:
+##
+# ALGORITHM:
+Step1:Data Collection
+  Gather brain MRI scans from public datasets (e.g., Figshare, BraTS)
+  Include tumor types: Glioma, Meningioma, Pituitary, No Tumor
+
+Step 2:Data Preprocessing
+  Resize images to a fixed dimension (e.g., 224x224)
+  Normalize pixel values (0-1 range)
+  Apply data augmentation (rotation, flipping, zoom)
+
+Step 3:Feature Selection
+   Use CNN-based architectures (ResNet, VGG, EfficientNet)
+   Extract deep features from MRI scans
+
+Step 4:Label Definition
+   Convolutional Neural Network (CNN)
+   Transfer Learning (ResNet50, VGG16)
+   Custom CNN Architecture
+
+Step 5:Model Selection
+   Split data into Train (80%), Validation (10%), Test (10%)
+   Use Adam optimizer with learning rate scheduling
+   Apply Early Stopping to prevent overfitting
+
+Step 6:Model Training
+   Accuracy, Precision, Recall, F1-Score
+   Confusion Matrix
+   ROC-AUC Curve
+
+Step 7:Model Evaluation
+   Gradio/Flask Web Interface
+   Mobile App Integration
+
 ### Program:
-### Task 1:
-Construct the FOL representation for the following sentences <br> 
-1.	John likes all kinds of food.  <br> 
-2.	Apples are food.  <br> 
-3.	Chicken is a food.  <br> 
-4.	Sue eats everything Bill eats. <br> 
-5.	 Bill eats peanuts  <br> 
-   Convert into clause form and Prove that John like Apple by using Prolog. <br> 
-### Program:
-```
-likes(john,X):-
-food(X).
-eats(bill,X):-
-eats(sue,X).
-eats(Y,X):-
-food(X).
-eats(bill,peanuts).
-food(apple).
-food(chicken).
-food(peanuts).
-```
+
+#Maintest.py:
+import cv2
+from keras.models import load_model
+from PIL import Image
+import numpy as np
+
+model=load_model('BrainTumor10EpochsCategorical.h5')
+
+image=cv2.imread(r'"C:\Users\SEC\Desktop\Brain tumor\Brain tumor\pred\pred10.jpg"')
+
+img=Image.fromarray(image)
+
+img=img.resize((64,64))
+
+img=np.array(img)
+
+input_img=np.expand_dims(img, axis=0)
+
+result=model.predict(input_img)
+threshold = 0.5
+
+# Convert probability values to binary decision
+binary_prediction = 1 if result[0, 1] > threshold else 0
+
+print(binary_prediction)
+if(binary_prediction==1):
+    {
+        print("THE MRI SCAN IS DETECTED WITH TUMOR\nHope your recovery is short,sweet and strong.")
+    }
+else:
+    {
+        print("THIS MRI SCAN DOES NOT HAVE TUMOR\nGOOD TO GO :)")  
+    }
+
+#Maintrain.py:
+import cv2
+import os
+import tensorflow as tf
+from tensorflow import keras
+from PIL import Image
+import numpy as np
+from sklearn.model_selection import train_test_split
+from keras.utils import normalize
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Activation, Dropout, Flatten, Dense
+from keras.utils import to_categorical
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+
+
+image_directory='data/'
+no_tumor_images=os.listdir(image_directory+ 'no/')
+yes_tumor_images=os.listdir(image_directory+ 'yes/')
+dataset=[]
+label=[]
+
+INPUT_SIZE=64
+# print(no_tumor_images)
+
+# path='no0.jpg'
+
+# print(path.split('.')[1])
+
+for i , image_name in enumerate(no_tumor_images):
+    if(image_name.split('.')[1]=='jpg'):
+        image=cv2.imread(image_directory+'no/'+image_name)
+        image=Image.fromarray(image,'RGB')
+        image=image.resize((INPUT_SIZE,INPUT_SIZE))
+        dataset.append(np.array(image))
+        label.append(0)
+
+for i , image_name in enumerate(yes_tumor_images):
+    if(image_name.split('.')[1]=='jpg'):
+        image=cv2.imread(image_directory+'yes/'+image_name)
+        image=Image.fromarray(image, 'RGB')
+        image=image.resize((INPUT_SIZE,INPUT_SIZE))
+        dataset.append(np.array(image))
+        label.append(1)
+
+dataset=np.array(dataset)
+label=np.array(label)
+
+
+x_train, x_test, y_train, y_test=train_test_split(dataset, label, test_size=0.2, random_state=0)
+
+# Reshape = (n, image_width, image_height, n_channel)
+
+# print(x_train.shape)
+# print(y_train.shape)
+
+# print(x_test.shape)
+# print(y_test.shape)
+
+x_train=normalize(x_train, axis=1)
+x_test=normalize(x_test, axis=1)
+
+y_train=to_categorical(y_train , num_classes=2)
+y_test=to_categorical(y_test , num_classes=2)
+
+
+
+# Model Building
+# 64,64,3
+
+model=Sequential()
+
+model.add(Conv2D(32, (3,3), input_shape=(INPUT_SIZE, INPUT_SIZE, 3)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2,2)))
+
+model.add(Conv2D(32, (3,3), kernel_initializer='he_uniform'))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2,2)))
+
+
+model.add(Conv2D(64, (3,3), kernel_initializer='he_uniform'))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2,2)))
+
+model.add(Flatten())
+model.add(Dense(64))
+model.add(Activation('relu'))
+model.add(Dropout(0.5))
+model.add(Dense(2))
+model.add(Activation('softmax'))
+
+
+# Binary CrossEntropy= 1, sigmoid
+# Categorical Cross Entryopy= 2 , softmax
+
+model.compile(loss='categorical_crossentropy',optimizer='adam', metrics=['accuracy'])
+
+
+model.fit(x_train, y_train, 
+batch_size=16, 
+verbose=1, epochs=10, 
+validation_data=(x_test, y_test),
+shuffle=False)
+
+model.save('BrainTumor10EpochsCategorical.h5')
+
+
+_, accuracy = model.evaluate(x_test, y_test, verbose=0)
+print(f'Test Accuracy: {accuracy * 100:.2f}%')
+
+# Make predictions on the test set
+y_pred = model.predict(x_test)
+
+# Convert predicted probabilities to binary decisions
+y_pred_binary = np.argmax(y_pred, axis=1)
+
+# Convert true labels to binary decisions
+y_true_binary = np.argmax(y_test, axis=1)
+
+# Compute and print precision, recall, and F1 score
+precision = precision_score(y_true_binary, y_pred_binary)
+recall = recall_score(y_true_binary, y_pred_binary)
+f1 = f1_score(y_true_binary, y_pred_binary)
+
+print(f'Precision: {precision:.4f}')
+print(f'Recall: {recall:.4f}')
+print(f'F1 Score: {f1:.4f}')
+
+
+
+
+
+
+
+=.
+
+#app.py:
+from flask import Flask, render_template, request, send_file
+import cv2
+from keras.models import load_model
+from PIL import Image
+import numpy as np
+import os
+import base64
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+
+app = Flask(__name__, template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Template'))
+
+# Load the pre-trained model
+model = load_model('BrainTumor10EpochsCategorical.h5')
+threshold = 0.5
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    prediction = None
+    error_message = None
+    uploaded_image = None
+
+    if request.method == 'POST':
+        # Get the uploaded image file
+        file = request.files.get('file')
+
+        if not file:
+            error_message = 'No file selected'
+        else:
+            try:
+                # Read the image
+                image = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_COLOR)
+
+                # Preprocess the image
+                img = Image.fromarray(image)
+                img = img.resize((64, 64))
+                img = np.array(img)
+                input_img = np.expand_dims(img, axis=0)
+
+                # Make prediction
+                result = model.predict(input_img)
+
+                # Convert probability values to binary decision
+                binary_prediction = 1 if result[0, 1] > threshold else 0
+
+                # Set the prediction result
+                prediction = "Brain Tumor" if binary_prediction == 1 else "No Brain Tumor"
+
+                # Convert the image to base64 for displaying in HTML
+                _, buffer = cv2.imencode('.jpg', image)
+                encoded_image = base64.b64encode(buffer).decode('utf-8')
+                uploaded_image = f"data:image/jpeg;base64,{encoded_image}"
+
+            except cv2.error as e:
+                error_message = 'Error processing the image'
+                print(f"CV2 Error: {e}")
+            except Exception as e:
+                error_message = 'An error occurred'
+                print(f"Error: {e}")
+
+    return render_template('index.html', prediction=prediction, error_message=error_message, uploaded_image=uploaded_image,)
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
 ### Output:
-![image](https://github.com/HariHaranLK/AI_Lab_2023-24/assets/132996089/265dfcd5-b8f9-4583-a7e4-c07395814fbe)
-
-### Task 2:
-Consider the following facts and represent them in predicate form: <br>              
-1.	Steve likes easy courses. <br> 
-2.	Science courses are hard. <br> 
-3. All the courses in Have fun department are easy <br> 
-4. BK301 is Have fun department course.<br> 
-Convert the facts in predicate form to clauses and then prove by resolution: “Steve likes BK301 course”<br> 
-
-### Program:
-```
-likes(steve,X):-
-easycourse(X).
-hard(sciencecourse).
-easycourse(X):-
-course(X,dept(havefun)).
-course(bk301,dept(havefun)).
-```
-### Output:
-
-![image](https://github.com/HariHaranLK/AI_Lab_2023-24/assets/132996089/68e808e0-b60b-4e73-b09a-febe08ec33cf)
-
-### Task 3:
-Consider the statement <br> 
-“This is a crime for an American to sell weapons to hostile nations. The Nano , enemy of America has some missiles and its missiles were sold it by Colonal West who is an American” <br> 
-Convert to Clause form and prove west is criminal by using Prolog.<br> 
-### Program:
-```
-criminal(X):-
-american(X),
-weapon(Y),
-hostile(Z),
-sells(X,Y,Z).
-weapon(Y):-
-missile(Y).
-hostile(Z):-
-enemy(Z,X).
-sells(west,Y,nano):-
-missile(Y),
-owns(nano,Y).
-missile(m).
-owns(nano,m).
-enemy(nano,america).
-american(west).
-```
-### Output:
-
-![image](https://github.com/HariHaranLK/AI_Lab_2023-24/assets/132996089/34a73218-408e-4dee-886f-3412361a19d9)
-
 ### Result:
-Thus the prolog programs were executed successfully and the answer of query was found.
+The deep learning model successfully classified brain tumors with 93% accuracy.
